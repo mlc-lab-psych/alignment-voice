@@ -46,10 +46,6 @@
             "Zing"
         ];
 
-        async function preload_audio(data){
-            return data
-        }
-
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -293,298 +289,275 @@
 
             const screeningTimeline = [];
 
-            // screeningQuestions.forEach(question => {
-            //     screeningTimeline.push({
-            //         type: jsPsychSurveyMultiChoice,
-            //         questions: [
-            //             {
-            //                 prompt: question.prompt,
-            //                 options: ["Yes", "No"],
-            //                 required: true,
-            //                 name: question.name
-            //             }
-            //         ],
-            //         on_finish: function (data){
-            //             console.log(data.response)
-            //             if(data.response[question.name] !== question.validAnswer){
-            //                 console.log("false statement")
-            //                 screeningQuestionsBoolean = false;
-            //             }
-            //         }
-            //     });
-            // });
-            //
-            // timeline.push(...screeningTimeline)
-            //
-            // const not_qualified_text={
-            //     type:jsPsychHtmlKeyboardResponse,
-            //     stimulus:'<p>' +
-            //         'You are ineligible for this study as you have provided information which is inconsistent with your Prolific prescreening responses. Please return your submission on Prolific by selecting the \'Stop without completing\' button.' +
-            //         '</p>',
-            //     choices: "NO_KEYS",
-            //     on_start: function (not_qualified_text){
-            //         console.log(screeningQuestionsBoolean)
-            //         if(screeningQuestionsBoolean){
-            //             console.log(not_qualified_text)
-            //             not_qualified_text.stimulus = '<p>Screening Test Completed</p>' +
-            //                 '<p>Press n key to continue</p>'
-            //             not_qualified_text.choices = 'n'
-            //         }
-            //     }
-            // }
-            // timeline.push(not_qualified_text)
-            //
-            // const pre_exposure_task_instructions = {
-            //     type: jsPsychHtmlKeyboardResponse,
-            //     version:"",
-            //     stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-            //         "<p>You will be shown a list of words in a random order. For each of these words, please say them out loud in an enthusiastic manner once. Please make sure that you are in a quiet area to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
-            //         "<p>Press any key to begin.</p>"+
-            //         "</div>"
-            // }
-            //
-            // timeline.push(pre_exposure_task_instructions)
-            //
-            // const practice_words = {
-            //     type: jsPsychHtmlKeyboardResponse,
-            //     version: "",
-            //     stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-            //         "<p>Next, we are going to have you test your recording equipment. Please record yourself saying these words. Each word should be spoken once, in an expressive manner. Make sure that you are in a quiet area and speaking clearly.</p>" +
-            //         "<p>Press any key to begin.</p>"+
-            //         "</div>"
-            // }
-            //
-            // timeline.push(practice_words)
-            //
-            // let practice_words_list = ["Gosh", "Excellent"]
-            // let practice_word_trial = []
-            //
-            // practice_word_trial.push({
-            //     type:jsPsychInitializeMicrophone
-            // })
-            //
-            // practice_words_list.forEach(function (word){
-            //     practice_word_trial.push({
-            //         type:jsPsychHtmlAudioResponse,
-            //         stimulus: `<h2>${word}</h2><p>Repeat the word. Recording is already in progress</p><div class=\"timer-bar\"></div>`,
-            //         allow_playback: false,
-            //         recording_duration: 10000,
-            //     })
-            // })
-            //
-            // timeline.push(practice_word_trial)
-            //
-            // let jsPsychAudioStartAndStopButton = (function (jsPsych){
-            //     "use strict";
-            //     const info = {
-            //         name: "audio-start-stop-button-player",
-            //         version: "1.0.0",
-            //         parameters: {
-            //             stimulus: {
-            //                 type: jsPsych.ParameterType.HTML_STRING,
-            //                 pretty_name: "Stimulus",
-            //                 default: undefined,
-            //                 description: "The HTML string to be shown as the stimulus.",
-            //             },
-            //             instructions: {
-            //                 type: jsPsych.ParameterType.HTML_STRING,
-            //                 pretty_name: "Instructions",
-            //                 default: "Repeat the word after clicking Start Recording button.<br/> Click Stop Recording button after you finish repeating the word.",
-            //                 description: "HTML-formatted instructions for the participant.",
-            //             },
-            //         },
-            //     }
-            //
-            //     class AudioStartAndStopButtonPlugin{
-            //         constructor(jsPsych) {
-            //             this.jsPsych = jsPsych;
-            //             this.mediaRecorder = null;
-            //             this.audioChunks = [];
-            //             this.audioBlob = null;
-            //         }
-            //
-            //         trial(display_element, trial) {
-            //             display_element.innerHTML = `
-            //                 <h2>${trial.stimulus}</h2>
-            //                 <p>${trial.instructions}</p>
-            //                 <button id="start-recording">Start Recording</button>
-            //                 <button id="stop-recording" disabled>Stop Recording</button>
-            //                 <audio style="display: none" id="recorded-audio" controls hidden></audio>
-            //                 <button id="submit-response" disabled>Submit</button>
-            //                 <div class="timer-bar" id="timer"></div>
-            //             `
-            //
-            //             const startRecordingBtn = document.getElementById("start-recording");
-            //             const stopRecordingBtn = document.getElementById("stop-recording");
-            //             const submitResponseBtn = document.getElementById("submit-response");
-            //             const recordedAudioElement = document.getElementById("recorded-audio");
-            //
-            //             navigator.mediaDevices
-            //                 .getUserMedia({ audio: true })
-            //                 .then((stream) => {
-            //                     this.mediaRecorder = new MediaRecorder(stream);
-            //                     this.audioChunks = [];
-            //
-            //                     this.mediaRecorder.ondataavailable = (event) => {
-            //                         this.audioChunks.push(event.data);
-            //                     };
-            //
-            //                     this.mediaRecorder.onstop = () => {
-            //                         this.audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
-            //                         this.audioChunks = [];
-            //                         recordedAudioElement.src = URL.createObjectURL(this.audioBlob);
-            //                         recordedAudioElement.hidden = false;
-            //                         submitResponseBtn.disabled = false;
-            //                     };
-            //
-            //                     startRecordingBtn.addEventListener("click", () => {
-            //                         this.audioChunks = [];
-            //                         this.mediaRecorder.start();
-            //                         startRecordingBtn.disabled = true;
-            //                         stopRecordingBtn.disabled = false;
-            //                         document.getElementById("timer").style.display = "block";
-            //
-            //                         setTimeout(() => {
-            //                             this.mediaRecorder.stop();
-            //                             startRecordingBtn.disabled = true;
-            //                             stopRecordingBtn.disabled = true;
-            //                             document.getElementById("timer").style.display = "none";
-            //                         }, 5000);
-            //                     });
-            //
-            //                     stopRecordingBtn.addEventListener("click", () => {
-            //                         this.mediaRecorder.stop();
-            //                         startRecordingBtn.disabled = true;
-            //                         stopRecordingBtn.disabled = true;
-            //                         document.getElementById("timer").style.display = "none";
-            //                     });
-            //
-            //                     submitResponseBtn.addEventListener("click", () => {
-            //                         if (this.audioBlob) {
-            //                             const reader = new FileReader();
-            //                             reader.readAsDataURL(this.audioBlob);
-            //                             reader.onloadend = () => {
-            //                                 const base64Audio = reader.result.split(",")[1];
-            //                                 this.jsPsych.finishTrial({ response_audio: base64Audio });
-            //                             };
-            //                         } else {
-            //                             this.jsPsych.finishTrial({ response_audio: null });
-            //                         }
-            //                     });
-            //                 })
-            //                 .catch((error) => {
-            //                     console.error("Error accessing microphone:", error);
-            //                     display_element.innerHTML = `<p style="color: red;">Microphone access is required for this task. Please enable your microphone and refresh the page.</p>`;
-            //                 });
-            //         }
-            //     }
-            //
-            //     AudioStartAndStopButtonPlugin.info = info
-            //     return AudioStartAndStopButtonPlugin
-            // })(jsPsychModule)
-            //
-            // let word_trial = []
-            //
-            // shuffleArray(words).forEach(function (word){
-            //     word_trial.push({
-            //         type:jsPsychAudioStartAndStopButton,
-            //         stimulus: word,
-            //         allow_playback: false,
-            //         recording_duration: 10000,
-            //     })
-            // })
-            //
-            // timeline.push(word_trial)
-            //
-            // if(labeled === "labeled"){
-            //     if(table === "vivian"){
-            //         const vivian = {
-            //             type: jsPsychHtmlButtonResponse,
-            //             version:"",
-            //             stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-            //                 "<p>Next, we are going to have you listen to some voice clips of a person who has autism spectrum disorder. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-            //                 "</div>",
-            //             choices: ['Continue'],
-            //             button_html: [`<button class="jspsych-btn">%choice%</button>`]
-            //         }
-            //
-            //         timeline.push(vivian)
-            //     }
-            //     else if(table === "melissa"){
-            //         const melissa = {
-            //             type: jsPsychHtmlButtonResponse,
-            //             version:"",
-            //             stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-            //                 "<p>Next, you will listen to some voice clips spoken by a neurotypical person. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-            //                 "</div>",
-            //             choices: ['Continue'],
-            //             button_html: [`<button class="jspsych-btn">%choice%</button>`]
-            //         }
-            //
-            //         timeline.push(melissa)
-            //     }
-            //     else{
-            //         const alexa = {
-            //             type: jsPsychHtmlButtonResponse,
-            //             version:"",
-            //             stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-            //                 "<p>Next, we are going to have you listen to some voice clips of a text-to-speech chatbot. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-            //                 "</div>",
-            //             choices: ['Continue'],
-            //             button_html: [`<button class="jspsych-btn">%choice%</button>`]
-            //         }
-            //
-            //         timeline.push(alexa)
-            //     }
-            // }
-            // else{
-            //     const no_label = {
-            //         type: jsPsychHtmlButtonResponse,
-            //         version:"",
-            //         stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-            //             "<p>Next, you will listen to some voice clips. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-            //             "</div>",
-            //         choices: ['Continue'],
-            //         button_html: [`<button class="jspsych-btn">%choice%</button>`]
-            //     }
-            //
-            //     timeline.push(no_label)
-            // }
-            //
-            // const phase_two_practice_instruction = {
-            //     type: jsPsychHtmlButtonResponse,
-            //     version:"",
-            //     stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-            //         "<p>To test how your audio equipment is performing, we will have you listen to a few voice clips.</p>" +
-            //         "</div>",
-            //     choices: ['Continue'],
-            //     button_html: [`<button class="jspsych-btn">%choice%</button>`]
-            // }
-            //
-            // timeline.push(phase_two_practice_instruction)
-            //
-            // let practice_trials_audios = ['sound/vivian_AWESOME.wav', 'sound/vivian_ROGER.wav']
-            //
-            // const practice_trial = []
-            //
-            // practice_trials_audios.forEach(function(file){
-            //     practice_trial.push({
-            //         type: jsPsychAudioKeyboardResponse,
-            //         stimulus: file,
-            //         prompt: '<p>Listen to the word</p>',
-            //         response_allowed_while_playing: false,
-            //         trial_ends_after_audio: true,
-            //     })
-            //
-            //     practice_trial.push({
-            //         type:jsPsychHtmlAudioResponse,
-            //         stimulus: "<p>Repeat the word. Recording is already in progress</p><div class=\"timer-bar\"></div>",
-            //         allow_playback: false,
-            //         recording_duration: 10000,
-            //     })
-            // })
-            //
-            // timeline.push(practice_trial)
+            screeningQuestions.forEach(question => {
+                screeningTimeline.push({
+                    type: jsPsychSurveyMultiChoice,
+                    questions: [
+                        {
+                            prompt: question.prompt,
+                            options: ["Yes", "No"],
+                            required: true,
+                            name: question.name
+                        }
+                    ],
+                    on_finish: function (data){
+                        console.log(data.response)
+                        if(data.response[question.name] !== question.validAnswer){
+                            console.log("false statement")
+                            screeningQuestionsBoolean = false;
+                        }
+                    }
+                });
+            });
+
+            timeline.push(...screeningTimeline)
+
+            const not_qualified_text={
+                type:jsPsychHtmlKeyboardResponse,
+                stimulus:'<p>' +
+                    'You are ineligible for this study as you have provided information which is inconsistent with your Prolific prescreening responses. Please return your submission on Prolific by selecting the \'Stop without completing\' button.' +
+                    '</p>',
+                choices: "NO_KEYS",
+                on_start: function (not_qualified_text){
+                    console.log(screeningQuestionsBoolean)
+                    if(screeningQuestionsBoolean){
+                        console.log(not_qualified_text)
+                        not_qualified_text.stimulus = '<p>Screening Test Completed</p>' +
+                            '<p>Press n key to continue</p>'
+                        not_qualified_text.choices = 'n'
+                    }
+                }
+            }
+            timeline.push(not_qualified_text)
+
+            const practice_words = {
+                type: jsPsychHtmlKeyboardResponse,
+                version: "",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<p>Next, we are going to have you test your recording equipment. Please record yourself saying these words. Each word should be spoken once, in an expressive manner. Make sure that you are in a quiet area and speaking clearly. Additionally, please ensure that notifications are enabled on the device you use to complete these tasks.</p>" +
+                    "<p>Press any key to begin.</p>"+
+                    "</div>"
+            }
+
+            timeline.push(practice_words)
+
+            let practice_words_list = ["Gosh", "Excellent"]
+            let practice_word_trial = []
+
+            let jsPsychAudioStartAndStopButton = (function (jsPsych){
+                "use strict";
+                const info = {
+                    name: "audio-start-stop-button-player",
+                    version: "1.0.0",
+                    parameters: {
+                        stimulus: {
+                            type: jsPsych.ParameterType.HTML_STRING,
+                            pretty_name: "Stimulus",
+                            default: undefined,
+                            description: "The HTML string to be shown as the stimulus.",
+                        },
+                        instructions: {
+                            type: jsPsych.ParameterType.HTML_STRING,
+                            pretty_name: "Instructions",
+                            default: "Repeat the word after clicking Start Recording button.<br/> Click Stop Recording button after you finish repeating the word.",
+                            description: "HTML-formatted instructions for the participant.",
+                        },
+                    },
+                }
+
+                class AudioStartAndStopButtonPlugin{
+                    constructor(jsPsych) {
+                        this.jsPsych = jsPsych;
+                        this.mediaRecorder = null;
+                        this.audioChunks = [];
+                        this.audioBlob = null;
+                    }
+
+                    trial(display_element, trial) {
+                        display_element.innerHTML = `
+                            <h2>${trial.stimulus}</h2>
+                            <p>${trial.instructions}</p>
+                            <button id="start-recording">Start Recording</button>
+                            <button id="stop-recording" disabled>Stop Recording</button>
+                            <audio style="display: none" id="recorded-audio" controls hidden></audio>
+                            <button id="submit-response" disabled>Submit</button>
+                            <div class="timer-bar" id="timer"></div>
+                        `
+
+                        const startRecordingBtn = document.getElementById("start-recording");
+                        const stopRecordingBtn = document.getElementById("stop-recording");
+                        const submitResponseBtn = document.getElementById("submit-response");
+                        const recordedAudioElement = document.getElementById("recorded-audio");
+
+                        navigator.mediaDevices
+                            .getUserMedia({ audio: true })
+                            .then((stream) => {
+                                this.mediaRecorder = new MediaRecorder(stream);
+                                this.audioChunks = [];
+
+                                this.mediaRecorder.ondataavailable = (event) => {
+                                    this.audioChunks.push(event.data);
+                                };
+
+                                this.mediaRecorder.onstop = () => {
+                                    this.audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
+                                    this.audioChunks = [];
+                                    recordedAudioElement.src = URL.createObjectURL(this.audioBlob);
+                                    recordedAudioElement.hidden = false;
+                                    submitResponseBtn.disabled = false;
+                                };
+
+                                startRecordingBtn.addEventListener("click", () => {
+                                    this.audioChunks = [];
+                                    this.mediaRecorder.start();
+                                    startRecordingBtn.disabled = true;
+                                    stopRecordingBtn.disabled = false;
+                                    document.getElementById("timer").style.display = "block";
+
+                                    setTimeout(() => {
+                                        this.mediaRecorder.stop();
+                                        startRecordingBtn.disabled = true;
+                                        stopRecordingBtn.disabled = true;
+                                        document.getElementById("timer").style.display = "none";
+                                    }, 5000);
+                                });
+
+                                stopRecordingBtn.addEventListener("click", () => {
+                                    this.mediaRecorder.stop();
+                                    startRecordingBtn.disabled = true;
+                                    stopRecordingBtn.disabled = true;
+                                    document.getElementById("timer").style.display = "none";
+                                });
+
+                                submitResponseBtn.addEventListener("click", () => {
+                                    if (this.audioBlob) {
+                                        const reader = new FileReader();
+                                        reader.readAsDataURL(this.audioBlob);
+                                        reader.onloadend = () => {
+                                            const base64Audio = reader.result.split(",")[1];
+                                            this.jsPsych.finishTrial({ response_audio: base64Audio });
+                                        };
+                                    } else {
+                                        this.jsPsych.finishTrial({ response_audio: null });
+                                    }
+                                });
+                            })
+                            .catch((error) => {
+                                console.error("Error accessing microphone:", error);
+                                display_element.innerHTML = `<p style="color: red;">Microphone access is required for this task. Please enable your microphone and refresh the page.</p>`;
+                            });
+                    }
+                }
+
+                AudioStartAndStopButtonPlugin.info = info
+                return AudioStartAndStopButtonPlugin
+            })(jsPsychModule)
+
+            practice_word_trial.push({
+                type:jsPsychInitializeMicrophone
+            })
+
+            practice_words_list.forEach(function (word){
+                practice_word_trial.push({
+                    type:jsPsychAudioStartAndStopButton,
+                    stimulus: word,
+                    allow_playback: false,
+                    recording_duration: 5000,
+                })
+            })
+
+            timeline.push(practice_word_trial)
+
+            const pre_exposure_task_instructions = {
+                type: jsPsychHtmlKeyboardResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<p>You will be shown a list of words in a random order. For each of these words, please say them out loud in an enthusiastic manner once. Please make sure that you are in a quiet area to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
+                    "<p>Press any key to begin.</p>"+
+                    "</div>"
+            }
+
+            timeline.push(pre_exposure_task_instructions)
+
+            let word_trial = []
+
+            shuffleArray(words).forEach(function (word){
+                word_trial.push({
+                    type:jsPsychAudioStartAndStopButton,
+                    stimulus: word,
+                    allow_playback: false,
+                    recording_duration: 5000,
+                })
+            })
+
+            timeline.push(word_trial)
+
+            if(labeled === "labeled"){
+                if(table === "vivian"){
+                    const vivian = {
+                        type: jsPsychHtmlButtonResponse,
+                        version:"",
+                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                            "<p>Next, we are going to have you listen to some voice clips of a person who has autism spectrum disorder. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "</div>",
+                        choices: ['Continue'],
+                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                    }
+
+                    timeline.push(vivian)
+                }
+                else if(table === "melissa"){
+                    const melissa = {
+                        type: jsPsychHtmlButtonResponse,
+                        version:"",
+                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                            "<p>Next, you will listen to some voice clips spoken by a neurotypical person. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "</div>",
+                        choices: ['Continue'],
+                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                    }
+
+                    timeline.push(melissa)
+                }
+                else{
+                    const alexa = {
+                        type: jsPsychHtmlButtonResponse,
+                        version:"",
+                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                            "<p>Next, we are going to have you listen to some voice clips of a text-to-speech chatbot. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "</div>",
+                        choices: ['Continue'],
+                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                    }
+
+                    timeline.push(alexa)
+                }
+            }
+            else{
+                const no_label = {
+                    type: jsPsychHtmlButtonResponse,
+                    version:"",
+                    stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                        "<p>Next, you will listen to some voice clips. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                        "</div>",
+                    choices: ['Continue'],
+                    button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                }
+
+                timeline.push(no_label)
+            }
+
+            const phase_two_practice_instruction = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<p>To test how your audio equipment is performing, we will have you listen to a few voice clips.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(phase_two_practice_instruction)
 
             let jsPsychAudioRepetition = (function (jsPsych) {
                 "use strict";
@@ -706,9 +679,32 @@
                 return AudioRepetitionPlugin;
             })(jsPsychModule);
 
+            let practice_trials_audios = ['sound/vivian_AWESOME.wav', 'sound/vivian_ROGER.wav']
+
+            const practice_trial = []
+
+            practice_trials_audios.forEach(function(file){
+                practice_trial.push({
+                    type: jsPsychAudioRepetition,
+                    stimulus: file,
+                })
+            })
+
+            timeline.push(practice_trial)
+
+            const audio_trial_instructions = {
+                type: jsPsychHtmlKeyboardResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<p>You will be provided a list of audio clip of words in a random order. For each of these words, please say them out loud in an enthusiastic manner once. Please make sure that you are in a quiet area to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
+                    "<p>Press any key to begin.</p>"+
+                    "</div>"
+            }
+
+            timeline.push(audio_trial_instructions)
+
             let audio_listen_trials = []
             audio.forEach(function (file){
-                console.log(file)
                 audio_listen_trials.push({
                     type: jsPsychAudioRepetition,
                     stimulus: file,
@@ -786,6 +782,7 @@
         }
 
     </style>
+
 </head>
 <body>
 
