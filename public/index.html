@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alive Experiment</title>
+    <script src="https://unpkg.com/jspsych@8.2.1"></script>
+    <link href="https://unpkg.com/jspsych@8.2.1/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css">
+
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey@1.0.1"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-initialize-microphone@1.0.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-audio-response@1.0.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@2.1.0"></script>
+
+    <script>
+        console.warn = () => {};
+        let test_stimuli;
+        let audio;
+        let labeled;
+        let table;
+        let screeningQuestionsBoolean = true;
+
+        let words = [
+            "Awesome",
+            "Bravo",
+            "Cool",
+            "Cheers",
+            "Ditto",
+            "Dynamite",
+            "Eureka",
+            "Great",
+            "Hurray",
+            "Howdy",
+            "Roger",
+            "Splash",
+            "Super",
+            "Wow",
+            "Wowzer",
+            "Yum",
+            "Zing"
+        ];
+
+        async function preload_audio(data){
+            return data
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch('http://localhost:3000/get-data');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}, ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                test_stimuli = data['test_stimuli'];
+                audio = data['audio'];
+                labeled = data['labeled']
+                if(labeled === "labeled"){table = data['table']}
+
+                console.log("Audio URLs:", audio);
+                console.log("Timeline Variables:", test_stimuli);
+                console.log("Labeled:", labeled)
+                console.log("Table Selected:", table)
+
+                initializeJsPsych();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function initializeJsPsych(){
+            const jsPsych = initJsPsych({
+                show_progress_bar: true,
+                auto_update_progress_bar: false,
+                on_finish: function(){
+                    jsPsych.data.displayData();
+                }
+            });
+
+            function getParamFromURL(name) {
+                name = name.replace(/\[/, "\\[").replace(/]/, "\\]");
+                let regex = new RegExp("[?&]" + name + "=([^&#]*)");
+                let results = regex.exec(window.location.href);
+                try{
+                    let decoded = decodeURIComponent(results[1])
+                    return results ? decoded : "";
+                }
+                catch(error){
+                    return ""
+                }
+            }
+
+            let subject_id = "alignment_voices" + Math.floor(Math.random() * 1000000);
+            let worker_id = getParamFromURL('PROLIFIC_PID') || subject_id;
+            let study_id = getParamFromURL('STUDY_ID') || "NULL";
+            let session_id = getParamFromURL('SESSION_ID') || "NULL";
+
+            jsPsych.data.addProperties({
+                subject: subject_id,
+                worker_id: worker_id,
+                study_id: study_id,
+                session_id: session_id
+            });
+
+            let timeline = []
+
+            const welcome_block = {
+                type: jsPsychHtmlKeyboardResponse,
+                version:"",
+                stimulus: "<p>Welcome to the experiment.</p><p>Press any key to begin.</p>",
+            };
+
+            timeline.push(welcome_block)
+
+            const consent_start = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus: "<p style='text-align: left; padding: 0 24px'>" +
+                    "Hello, we are researchers from Rochester Institute of Technology’s Meaning, Language & Cognition Lab, and we are asking you to participate in a study involving social attitudes towards those from different social groups. This study is being led by Valentine Webster, from the College of Liberal Arts. The faculty advisor for this study is Lilia Rissman. This form is designed to tell you about what the study is about and what risks might be involved in participation, so you can make a properly informed decision about whether you want to participate.</p>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            };
+
+            timeline.push(consent_start)
+
+            const study_about = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>What is this study about?</h1>" +
+                    "<p>At the MLC Lab, we are currently researching attitudes towards people of different social groups.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(study_about)
+
+            const study_doing = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>What will you be doing in this study?</h1>" +
+                    "<p>In this study, you may be tasked with listening to a series of quick audio clips, repeating after them, and answering questions related to yourself and the clips you repeat after. Further details will be provided later into your task.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(study_doing)
+
+            const audio_recording = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>Audio Recording Necessity</h1>" +
+                    "<p>In order to gather the necessary audio data for our study, we will record your voice repeating the audio clips. The audio files we record will be stored in a secure OneDrive folder on password-protected devices.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(audio_recording)
+
+            const benefits = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>What are the benefits of this study?</h1>" +
+                    "<p>By researching this topic, we are aiming to understand what leads to different types of attitudes, and how these attitudes differ across diverse groups of individuals.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(benefits)
+
+            const risks = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>What risks and discomforts will you be facing</h1>" +
+                    "<p>You will be asked about your mental health history, such as questions about whether you have certain mental health disorders, physical health issues, or disabilities. Such questions may be upsetting or even triggering for certain people. If you are experiencing mental health distress when answering these questions, please do not hesitate to call the 988 Suicide and Crisis Helpline or any other mental health service.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(risks)
+
+            const incentives = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>What are the incentives for participation?</h1>" +
+                    "<p>As noted in the recruitment form, you will be compensated for your participation in this study. This compensation will be at a rate of $10 per hour.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(incentives)
+
+            const privacy = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>How will privacy be ensured? <br/><br/> What information will be shared intentionally?</h1>" +
+                    "<p>Researchers will ensure your voice recordings are kept secure by storing them on an RIT-specific OneDrive using password-protected devices as necessary for analysis of voice clips and survey responses. Data included on repositories or preprint servers will have the Prolific/IDs to which they are attached replaced with unique random codes. No data will be distributed that will link any individual to any voice clip. Data about audio and survey responses based on the whole of the sample will be obtained through analysis and distributed, however no individual responses will be distributed.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(privacy)
+
+            const follow_up_studies = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>Follow Up Studies</h1>" +
+                    "<p>Note that we may request your participation again in a future study, if given your permission. Your participation is entirely voluntary, and you have the right to revoke your consent at any time in the future studies.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(follow_up_studies)
+
+            const questions = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<h1>Questions?</h1>" +
+                    "<p>If you have any questions regarding the purpose or methods of this study after your participation has concluded, please contact Valentine Webster at vcw6651@rit.edu. Furthermore, if you have any questions or concerns regarding the rights you have as a participant in this subject, then you can contact Heather Foti at hmfsrs@rit.edu, or by phone at 585-475-7673.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(questions)
+
+            const consent = {
+                type: jsPsychSurveyHtmlForm,
+                preamble: '',
+                html: `
+                    <style>
+                    .jspsych-content{
+                    text-align: left;
+                    }
+                    </style>
+                    <div style="max-width: 1200px">
+                        <div style='text-align: left;'>
+                            <h1>Statement of Consent</h1>
+                            <p>After carefully reading all the information you have been provided, do you consent to participate in this study?</p>
+                        </div>
+                        <input type="checkbox" id="agree" name="consent" value="Agreed" required>
+                        <label for="agree">I agree</label><br><br>
+                    </div>
+                `
+            }
+
+            timeline.push(consent)
+
+            let screeningQuestions = [
+                {prompt: "Is English your primary language?", name: "primary_language", validAnswer: "Yes"},
+                {prompt: "Is English your first language?", name: "first_language", validAnswer: "Yes"},
+                {prompt: "Are you deaf/hard-of-hearing?", name: "deaf", validAnswer: "No"},
+                {prompt: "Do you have any speech disorders?", name: "speech_disorder", validAnswer: "No"},
+                {prompt: "Do you regularly use hallucinogenic drugs (ecstasy, LSD, etc.)?", name: "drugs", validAnswer: "No"},
+                {prompt: "Have you ever experienced a stroke?", name: "stroke", validAnswer: "No"},
+                {prompt: "Do you have a mental health condition which impacts speech perception (schizophrenia, bipolar disorder, etc.)?", name: "mental_health", validAnswer: "No"},
+                {prompt: "Are you 18 years or older?", name: "age", validAnswer: "Yes"}
+            ];
+
+            screeningQuestions = shuffleArray(screeningQuestions)
+
+            const screeningTimeline = [];
+
+            // screeningQuestions.forEach(question => {
+            //     screeningTimeline.push({
+            //         type: jsPsychSurveyMultiChoice,
+            //         questions: [
+            //             {
+            //                 prompt: question.prompt,
+            //                 options: ["Yes", "No"],
+            //                 required: true,
+            //                 name: question.name
+            //             }
+            //         ],
+            //         on_finish: function (data){
+            //             console.log(data.response)
+            //             if(data.response[question.name] !== question.validAnswer){
+            //                 console.log("false statement")
+            //                 screeningQuestionsBoolean = false;
+            //             }
+            //         }
+            //     });
+            // });
+            //
+            // timeline.push(...screeningTimeline)
+            //
+            // const not_qualified_text={
+            //     type:jsPsychHtmlKeyboardResponse,
+            //     stimulus:'<p>' +
+            //         'You are ineligible for this study as you have provided information which is inconsistent with your Prolific prescreening responses. Please return your submission on Prolific by selecting the \'Stop without completing\' button.' +
+            //         '</p>',
+            //     choices: "NO_KEYS",
+            //     on_start: function (not_qualified_text){
+            //         console.log(screeningQuestionsBoolean)
+            //         if(screeningQuestionsBoolean){
+            //             console.log(not_qualified_text)
+            //             not_qualified_text.stimulus = '<p>Screening Test Completed</p>' +
+            //                 '<p>Press n key to continue</p>'
+            //             not_qualified_text.choices = 'n'
+            //         }
+            //     }
+            // }
+            // timeline.push(not_qualified_text)
+            //
+            // const pre_exposure_task_instructions = {
+            //     type: jsPsychHtmlKeyboardResponse,
+            //     version:"",
+            //     stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+            //         "<p>You will be shown a list of words in a random order. For each of these words, please say them out loud in an enthusiastic manner once. Please make sure that you are in a quiet area to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
+            //         "<p>Press any key to begin.</p>"+
+            //         "</div>"
+            // }
+            //
+            // timeline.push(pre_exposure_task_instructions)
+            //
+            // const practice_words = {
+            //     type: jsPsychHtmlKeyboardResponse,
+            //     version: "",
+            //     stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+            //         "<p>Next, we are going to have you test your recording equipment. Please record yourself saying these words. Each word should be spoken once, in an expressive manner. Make sure that you are in a quiet area and speaking clearly.</p>" +
+            //         "<p>Press any key to begin.</p>"+
+            //         "</div>"
+            // }
+            //
+            // timeline.push(practice_words)
+            //
+            // let practice_words_list = ["Gosh", "Excellent"]
+            // let practice_word_trial = []
+            //
+            // practice_word_trial.push({
+            //     type:jsPsychInitializeMicrophone
+            // })
+            //
+            // practice_words_list.forEach(function (word){
+            //     practice_word_trial.push({
+            //         type:jsPsychHtmlAudioResponse,
+            //         stimulus: `<h2>${word}</h2><p>Repeat the word. Recording is already in progress</p><div class=\"timer-bar\"></div>`,
+            //         allow_playback: false,
+            //         recording_duration: 10000,
+            //     })
+            // })
+            //
+            // timeline.push(practice_word_trial)
+            //
+            // let jsPsychAudioStartAndStopButton = (function (jsPsych){
+            //     "use strict";
+            //     const info = {
+            //         name: "audio-start-stop-button-player",
+            //         version: "1.0.0",
+            //         parameters: {
+            //             stimulus: {
+            //                 type: jsPsych.ParameterType.HTML_STRING,
+            //                 pretty_name: "Stimulus",
+            //                 default: undefined,
+            //                 description: "The HTML string to be shown as the stimulus.",
+            //             },
+            //             instructions: {
+            //                 type: jsPsych.ParameterType.HTML_STRING,
+            //                 pretty_name: "Instructions",
+            //                 default: "Repeat the word after clicking Start Recording button.<br/> Click Stop Recording button after you finish repeating the word.",
+            //                 description: "HTML-formatted instructions for the participant.",
+            //             },
+            //         },
+            //     }
+            //
+            //     class AudioStartAndStopButtonPlugin{
+            //         constructor(jsPsych) {
+            //             this.jsPsych = jsPsych;
+            //             this.mediaRecorder = null;
+            //             this.audioChunks = [];
+            //             this.audioBlob = null;
+            //         }
+            //
+            //         trial(display_element, trial) {
+            //             display_element.innerHTML = `
+            //                 <h2>${trial.stimulus}</h2>
+            //                 <p>${trial.instructions}</p>
+            //                 <button id="start-recording">Start Recording</button>
+            //                 <button id="stop-recording" disabled>Stop Recording</button>
+            //                 <audio style="display: none" id="recorded-audio" controls hidden></audio>
+            //                 <button id="submit-response" disabled>Submit</button>
+            //                 <div class="timer-bar" id="timer"></div>
+            //             `
+            //
+            //             const startRecordingBtn = document.getElementById("start-recording");
+            //             const stopRecordingBtn = document.getElementById("stop-recording");
+            //             const submitResponseBtn = document.getElementById("submit-response");
+            //             const recordedAudioElement = document.getElementById("recorded-audio");
+            //
+            //             navigator.mediaDevices
+            //                 .getUserMedia({ audio: true })
+            //                 .then((stream) => {
+            //                     this.mediaRecorder = new MediaRecorder(stream);
+            //                     this.audioChunks = [];
+            //
+            //                     this.mediaRecorder.ondataavailable = (event) => {
+            //                         this.audioChunks.push(event.data);
+            //                     };
+            //
+            //                     this.mediaRecorder.onstop = () => {
+            //                         this.audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
+            //                         this.audioChunks = [];
+            //                         recordedAudioElement.src = URL.createObjectURL(this.audioBlob);
+            //                         recordedAudioElement.hidden = false;
+            //                         submitResponseBtn.disabled = false;
+            //                     };
+            //
+            //                     startRecordingBtn.addEventListener("click", () => {
+            //                         this.audioChunks = [];
+            //                         this.mediaRecorder.start();
+            //                         startRecordingBtn.disabled = true;
+            //                         stopRecordingBtn.disabled = false;
+            //                         document.getElementById("timer").style.display = "block";
+            //
+            //                         setTimeout(() => {
+            //                             this.mediaRecorder.stop();
+            //                             startRecordingBtn.disabled = true;
+            //                             stopRecordingBtn.disabled = true;
+            //                             document.getElementById("timer").style.display = "none";
+            //                         }, 5000);
+            //                     });
+            //
+            //                     stopRecordingBtn.addEventListener("click", () => {
+            //                         this.mediaRecorder.stop();
+            //                         startRecordingBtn.disabled = true;
+            //                         stopRecordingBtn.disabled = true;
+            //                         document.getElementById("timer").style.display = "none";
+            //                     });
+            //
+            //                     submitResponseBtn.addEventListener("click", () => {
+            //                         if (this.audioBlob) {
+            //                             const reader = new FileReader();
+            //                             reader.readAsDataURL(this.audioBlob);
+            //                             reader.onloadend = () => {
+            //                                 const base64Audio = reader.result.split(",")[1];
+            //                                 this.jsPsych.finishTrial({ response_audio: base64Audio });
+            //                             };
+            //                         } else {
+            //                             this.jsPsych.finishTrial({ response_audio: null });
+            //                         }
+            //                     });
+            //                 })
+            //                 .catch((error) => {
+            //                     console.error("Error accessing microphone:", error);
+            //                     display_element.innerHTML = `<p style="color: red;">Microphone access is required for this task. Please enable your microphone and refresh the page.</p>`;
+            //                 });
+            //         }
+            //     }
+            //
+            //     AudioStartAndStopButtonPlugin.info = info
+            //     return AudioStartAndStopButtonPlugin
+            // })(jsPsychModule)
+            //
+            // let word_trial = []
+            //
+            // shuffleArray(words).forEach(function (word){
+            //     word_trial.push({
+            //         type:jsPsychAudioStartAndStopButton,
+            //         stimulus: word,
+            //         allow_playback: false,
+            //         recording_duration: 10000,
+            //     })
+            // })
+            //
+            // timeline.push(word_trial)
+            //
+            // if(labeled === "labeled"){
+            //     if(table === "vivian"){
+            //         const vivian = {
+            //             type: jsPsychHtmlButtonResponse,
+            //             version:"",
+            //             stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+            //                 "<p>Next, we are going to have you listen to some voice clips of a person who has autism spectrum disorder. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+            //                 "</div>",
+            //             choices: ['Continue'],
+            //             button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            //         }
+            //
+            //         timeline.push(vivian)
+            //     }
+            //     else if(table === "melissa"){
+            //         const melissa = {
+            //             type: jsPsychHtmlButtonResponse,
+            //             version:"",
+            //             stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+            //                 "<p>Next, you will listen to some voice clips spoken by a neurotypical person. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+            //                 "</div>",
+            //             choices: ['Continue'],
+            //             button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            //         }
+            //
+            //         timeline.push(melissa)
+            //     }
+            //     else{
+            //         const alexa = {
+            //             type: jsPsychHtmlButtonResponse,
+            //             version:"",
+            //             stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+            //                 "<p>Next, we are going to have you listen to some voice clips of a text-to-speech chatbot. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+            //                 "</div>",
+            //             choices: ['Continue'],
+            //             button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            //         }
+            //
+            //         timeline.push(alexa)
+            //     }
+            // }
+            // else{
+            //     const no_label = {
+            //         type: jsPsychHtmlButtonResponse,
+            //         version:"",
+            //         stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+            //             "<p>Next, you will listen to some voice clips. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+            //             "</div>",
+            //         choices: ['Continue'],
+            //         button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            //     }
+            //
+            //     timeline.push(no_label)
+            // }
+            //
+            // const phase_two_practice_instruction = {
+            //     type: jsPsychHtmlButtonResponse,
+            //     version:"",
+            //     stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+            //         "<p>To test how your audio equipment is performing, we will have you listen to a few voice clips.</p>" +
+            //         "</div>",
+            //     choices: ['Continue'],
+            //     button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            // }
+            //
+            // timeline.push(phase_two_practice_instruction)
+            //
+            // let practice_trials_audios = ['sound/vivian_AWESOME.wav', 'sound/vivian_ROGER.wav']
+            //
+            // const practice_trial = []
+            //
+            // practice_trials_audios.forEach(function(file){
+            //     practice_trial.push({
+            //         type: jsPsychAudioKeyboardResponse,
+            //         stimulus: file,
+            //         prompt: '<p>Listen to the word</p>',
+            //         response_allowed_while_playing: false,
+            //         trial_ends_after_audio: true,
+            //     })
+            //
+            //     practice_trial.push({
+            //         type:jsPsychHtmlAudioResponse,
+            //         stimulus: "<p>Repeat the word. Recording is already in progress</p><div class=\"timer-bar\"></div>",
+            //         allow_playback: false,
+            //         recording_duration: 10000,
+            //     })
+            // })
+            //
+            // timeline.push(practice_trial)
+
+            let jsPsychAudioRepetition = (function (jsPsych) {
+                "use strict";
+
+                const info = {
+                    name: "audio-repetition",
+                    version: "1.0.0",
+                    parameters: {
+                        stimulus: {
+                            type: jsPsych.ParameterType.AUDIO,
+                            pretty_name: "Stimulus",
+                            default: undefined,
+                            description: "The audio file to be played as the stimulus.",
+                        },
+                        instructions: {
+                            type: jsPsych.ParameterType.HTML_STRING,
+                            pretty_name: "Instructions",
+                            default: "Repeat the word after listening.",
+                            description: "HTML-formatted instructions for the participant.",
+                        },
+                    },
+                };
+
+                class AudioRepetitionPlugin {
+                    constructor(jsPsych) {
+                        this.jsPsych = jsPsych;
+                        this.mediaRecorder = null;
+                        this.audioChunks = [];
+                        this.audioBlob = null;
+                    }
+
+                    trial(display_element, trial) {
+                        display_element.innerHTML = `
+                            <p>${trial.instructions}</p>
+                            <audio id="stimulus-audio" src="${trial.stimulus}" hidden></audio>
+                            <button id="play-audio">Play Word</button>
+                            <button id="start-recording">Start Recording</button>
+                            <button id="stop-recording" disabled>Stop Recording</button>
+                            <audio style="display: none" id="recorded-audio" controls hidden></audio>
+                            <button id="submit-response" disabled>Submit</button>
+                            <div class="timer-bar" id="timer"></div>
+                        `;
+
+                        const stimulusAudio = document.getElementById("stimulus-audio");
+                        const playAudioBtn = document.getElementById("play-audio");
+                        const startRecordingBtn = document.getElementById("start-recording");
+                        const stopRecordingBtn = document.getElementById("stop-recording");
+                        const submitResponseBtn = document.getElementById("submit-response");
+                        const recordedAudioElement = document.getElementById("recorded-audio");
+
+                        playAudioBtn.addEventListener("click", () => {
+                            stimulusAudio.currentTime = 0;
+                            stimulusAudio.play();
+                        });
+
+                        // Setup recording
+                        navigator.mediaDevices
+                            .getUserMedia({ audio: true })
+                            .then((stream) => {
+                                this.mediaRecorder = new MediaRecorder(stream);
+                                this.audioChunks = [];
+
+                                this.mediaRecorder.ondataavailable = (event) => {
+                                    this.audioChunks.push(event.data);
+                                };
+
+                                this.mediaRecorder.onstop = () => {
+                                    this.audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
+                                    this.audioChunks = [];
+                                    const recordedAudioURL = URL.createObjectURL(this.audioBlob);
+                                    recordedAudioElement.src = recordedAudioURL;
+                                    recordedAudioElement.hidden = false;
+                                    submitResponseBtn.disabled = false;
+                                };
+
+                                startRecordingBtn.addEventListener("click", () => {
+                                    this.audioChunks = [];
+                                    this.mediaRecorder.start();
+                                    startRecordingBtn.disabled = true;
+                                    stopRecordingBtn.disabled = false;
+                                    document.getElementById("timer").style.display = "block";
+
+                                    setTimeout(() => {
+                                        this.mediaRecorder.stop();
+                                        startRecordingBtn.disabled = true;
+                                        stopRecordingBtn.disabled = true;
+                                        document.getElementById("timer").style.display = "none";
+                                    }, 5000);
+                                });
+
+                                stopRecordingBtn.addEventListener("click", () => {
+                                    this.mediaRecorder.stop();
+                                    startRecordingBtn.disabled = false;
+                                    stopRecordingBtn.disabled = true;
+                                    document.getElementById("timer").style.display = "none";
+                                });
+
+                                submitResponseBtn.addEventListener("click", () => {
+                                    if (this.audioBlob) {
+                                        const reader = new FileReader();
+                                        reader.readAsDataURL(this.audioBlob);
+                                        reader.onloadend = () => {
+                                            const base64Audio = reader.result.split(",")[1];
+                                            this.jsPsych.finishTrial({ response_audio: base64Audio });
+                                        };
+                                    } else {
+                                        this.jsPsych.finishTrial({ response_audio: null });
+                                    }
+                                });
+                            })
+                            .catch((error) => {
+                                console.error("Error accessing microphone:", error);
+                                display_element.innerHTML = `<p style="color: red;">Microphone access is required for this task. Please enable your microphone and refresh the page.</p>`;
+                            });
+                    }
+                }
+
+                AudioRepetitionPlugin.info = info;
+                return AudioRepetitionPlugin;
+            })(jsPsychModule);
+
+            let audio_listen_trials = []
+            audio.forEach(function (file){
+                console.log(file)
+                audio_listen_trials.push({
+                    type: jsPsychAudioRepetition,
+                    stimulus: file,
+                })
+            })
+
+            timeline.push(...audio_listen_trials)
+
+            jsPsych.run({timeline:timeline})
+        }
+
+        async function sendResults(results) {
+            try {
+                const response = await fetch('http://localhost:3000/submit-results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(results)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log(result.message);
+            } catch (error) {
+                console.error('Error sending results:', error);
+            }
+        }
+
+        window.onload = function() {
+            fetchData();
+        }
+    </script>
+    <style>
+        .jspsych-content{
+            max-width: 1200px;
+            min-width: 800px;
+            width:100%;
+
+        }
+
+        #jspsych-html-button-response-btngroup{
+            text-align: left;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 10px;
+            background-color: lightgray;
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+            display: none;
+        }
+        .timer-bar::after {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: red;
+            position: absolute;
+            left: 0;
+            animation: countdown 5s linear forwards;
+        }
+        @keyframes countdown {
+            from { width: 100%; }
+            to { width: 0; }
+        }
+
+        .jspsych-survey-multi-choice-question{
+            text-align: center !important;
+        }
+
+    </style>
+</head>
+<body>
+
+</body>
+</html>
