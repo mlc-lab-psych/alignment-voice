@@ -25,6 +25,7 @@
         let labeled;
         let table;
         let screeningQuestionsBoolean = true;
+        let recordingTimeout;
 
         let words = [
             "Awesome",
@@ -414,7 +415,8 @@
                                     stopRecordingBtn.disabled = false;
                                     document.getElementById("timer").style.display = "block";
 
-                                    setTimeout(() => {
+                                    clearTimeout(recordingTimeout)
+                                    recordingTimeout = setTimeout(() => {
                                         this.mediaRecorder.stop();
                                         startRecordingBtn.disabled = true;
                                         stopRecordingBtn.disabled = true;
@@ -423,6 +425,7 @@
                                 });
 
                                 stopRecordingBtn.addEventListener("click", () => {
+                                    clearTimeout(recordingTimeout)
                                     this.mediaRecorder.stop();
                                     startRecordingBtn.disabled = true;
                                     stopRecordingBtn.disabled = true;
@@ -617,6 +620,7 @@
                         navigator.mediaDevices
                             .getUserMedia({ audio: true })
                             .then((stream) => {
+
                                 this.mediaRecorder = new MediaRecorder(stream);
                                 this.audioChunks = [];
 
@@ -640,7 +644,8 @@
                                     stopRecordingBtn.disabled = false;
                                     document.getElementById("timer").style.display = "block";
 
-                                    setTimeout(() => {
+                                    clearTimeout(recordingTimeout);
+                                    recordingTimeout = setTimeout(() => {
                                         this.mediaRecorder.stop();
                                         startRecordingBtn.disabled = true;
                                         stopRecordingBtn.disabled = true;
@@ -649,6 +654,7 @@
                                 });
 
                                 stopRecordingBtn.addEventListener("click", () => {
+                                    clearTimeout(recordingTimeout);
                                     this.mediaRecorder.stop();
                                     startRecordingBtn.disabled = false;
                                     stopRecordingBtn.disabled = true;
