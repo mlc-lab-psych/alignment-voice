@@ -26,6 +26,8 @@
         let table;
         let screeningQuestionsBoolean = true;
         let recordingTimeout;
+        let n_trials = 34;
+        let current_trials = 0;
 
         let words = [
             "Awesome",
@@ -344,7 +346,7 @@
 
             let practice_words_list = ["Gosh", "Excellent"]
             let practice_word_trial = []
-
+            //
             let jsPsychAudioStartAndStopButton = (function (jsPsych){
                 "use strict";
                 const info = {
@@ -360,7 +362,7 @@
                         instructions: {
                             type: jsPsych.ParameterType.HTML_STRING,
                             pretty_name: "Instructions",
-                            default: "Repeat the word after clicking Start Recording button.<br/> Click Stop Recording button after you finish repeating the word.",
+                            default: "1. Repeat the word after clicking Start Recording button.<br/> 2. Click Stop Recording button after you finish repeating the word. <br/> 3. Click on Submit button to share your response.",
                             description: "HTML-formatted instructions for the participant.",
                         },
                     },
@@ -414,6 +416,9 @@
                                     startRecordingBtn.disabled = true;
                                     stopRecordingBtn.disabled = false;
                                     document.getElementById("timer").style.display = "block";
+                                    startRecordingBtn.style.background = '#EFEFEF'
+                                    stopRecordingBtn.style.background = '#cd5c5c'
+                                    stopRecordingBtn.style.color = 'white'
 
                                     clearTimeout(recordingTimeout)
                                     recordingTimeout = setTimeout(() => {
@@ -421,6 +426,9 @@
                                         startRecordingBtn.disabled = true;
                                         stopRecordingBtn.disabled = true;
                                         document.getElementById("timer").style.display = "none";
+                                        stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
+                                        stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
+                                        submitResponseBtn.style.background = '#a3f8a3'
                                     }, 5000);
                                 });
 
@@ -430,6 +438,9 @@
                                     startRecordingBtn.disabled = true;
                                     stopRecordingBtn.disabled = true;
                                     document.getElementById("timer").style.display = "none";
+                                    stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
+                                    stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
+                                    submitResponseBtn.style.background = '#a3f8a3'
                                 });
 
                                 submitResponseBtn.addEventListener("click", () => {
@@ -455,7 +466,7 @@
                 AudioStartAndStopButtonPlugin.info = info
                 return AudioStartAndStopButtonPlugin
             })(jsPsychModule)
-
+            //
             practice_word_trial.push({
                 type:jsPsychInitializeMicrophone
             })
@@ -488,8 +499,10 @@
                 word_trial.push({
                     type:jsPsychAudioStartAndStopButton,
                     stimulus: word,
-                    allow_playback: false,
-                    recording_duration: 5000,
+                    on_finish: function (data){
+                        current_trials += 1
+                        jsPsych.progressBar.progress = current_trials / n_trials;
+                    }
                 })
             })
 
@@ -578,9 +591,15 @@
                         instructions: {
                             type: jsPsych.ParameterType.HTML_STRING,
                             pretty_name: "Instructions",
-                            default: "Repeat the word after listening.",
+                            default: "1. Click on the Play Audio button to hear the word. <br/> 2. After hearing the word, click on Start Recording button to enable recording to capture your try. <br/> 3. After repeating the word, click on Stop Recording button. <br/> 4. Click on the Submit button to share your response.  ",
                             description: "HTML-formatted instructions for the participant.",
                         },
+                        index: {
+                            type: jsPsych.ParameterType.HTML_STRING,
+                            pretty_name: "Audio's Index",
+                            default: " Audio Clip:  ",
+                            description: "HTML-formatted audio's index for the participant.",
+                        }
                     },
                 };
 
@@ -594,19 +613,24 @@
 
                     trial(display_element, trial) {
                         display_element.innerHTML = `
+
+                            <p>${trial.index}</p>
+                            <br/>
                             <p>${trial.instructions}</p>
                             <audio id="stimulus-audio" src="${trial.stimulus}" hidden></audio>
                             <button id="play-audio">Play Word</button>
-                            <button id="start-recording">Start Recording</button>
+                            <button id="start-recording-audio" disabled>Start Recording</button>
                             <button id="stop-recording" disabled>Stop Recording</button>
                             <audio style="display: none" id="recorded-audio" controls hidden></audio>
                             <button id="submit-response" disabled>Submit</button>
                             <div class="timer-bar" id="timer"></div>
+
+
                         `;
 
                         const stimulusAudio = document.getElementById("stimulus-audio");
                         const playAudioBtn = document.getElementById("play-audio");
-                        const startRecordingBtn = document.getElementById("start-recording");
+                        const startRecordingBtn = document.getElementById("start-recording-audio");
                         const stopRecordingBtn = document.getElementById("stop-recording");
                         const submitResponseBtn = document.getElementById("submit-response");
                         const recordedAudioElement = document.getElementById("recorded-audio");
@@ -614,6 +638,9 @@
                         playAudioBtn.addEventListener("click", () => {
                             stimulusAudio.currentTime = 0;
                             stimulusAudio.play();
+                            playAudioBtn.style.background = '#EFEFEF'
+                            startRecordingBtn.disabled = false
+                            startRecordingBtn.style.background = '#a3f8a3'
                         });
 
                         // Setup recording
@@ -631,8 +658,7 @@
                                 this.mediaRecorder.onstop = () => {
                                     this.audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
                                     this.audioChunks = [];
-                                    const recordedAudioURL = URL.createObjectURL(this.audioBlob);
-                                    recordedAudioElement.src = recordedAudioURL;
+                                    recordedAudioElement.src = URL.createObjectURL(this.audioBlob);
                                     recordedAudioElement.hidden = false;
                                     submitResponseBtn.disabled = false;
                                 };
@@ -643,6 +669,10 @@
                                     startRecordingBtn.disabled = true;
                                     stopRecordingBtn.disabled = false;
                                     document.getElementById("timer").style.display = "block";
+                                    startRecordingBtn.style.background = '#EFEFEF'
+                                    stopRecordingBtn.style.background = '#cd5c5c'
+                                    stopRecordingBtn.style.color = 'white'
+                                    playAudioBtn.disabled = true;
 
                                     clearTimeout(recordingTimeout);
                                     recordingTimeout = setTimeout(() => {
@@ -650,15 +680,22 @@
                                         startRecordingBtn.disabled = true;
                                         stopRecordingBtn.disabled = true;
                                         document.getElementById("timer").style.display = "none";
+                                        stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
+                                        stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
+                                        submitResponseBtn.style.background = '#a3f8a3'
                                     }, 5000);
                                 });
 
                                 stopRecordingBtn.addEventListener("click", () => {
                                     clearTimeout(recordingTimeout);
                                     this.mediaRecorder.stop();
-                                    startRecordingBtn.disabled = false;
+                                    startRecordingBtn.disabled = true;
                                     stopRecordingBtn.disabled = true;
                                     document.getElementById("timer").style.display = "none";
+                                    playAudioBtn.disabled = true;
+                                    stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
+                                    stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
+                                    submitResponseBtn.style.background = '#a3f8a3'
                                 });
 
                                 submitResponseBtn.addEventListener("click", () => {
@@ -690,9 +727,11 @@
             const practice_trial = []
 
             practice_trials_audios.forEach(function(file){
+                let indexOfFile = practice_trials_audios.indexOf(file) + 1
                 practice_trial.push({
                     type: jsPsychAudioRepetition,
                     stimulus: file,
+                    index: `Audio Clip: ${indexOfFile}`
                 })
             })
 
@@ -711,9 +750,16 @@
 
             let audio_listen_trials = []
             audio.forEach(function (file){
+                let indexOfFile = audio.indexOf(file) + 1
+                console.log(indexOfFile)
                 audio_listen_trials.push({
                     type: jsPsychAudioRepetition,
                     stimulus: file,
+                    index: `Audio Clip: ${indexOfFile}`,
+                    on_finish: function (data){
+                        current_trials += 1
+                        jsPsych.progressBar.progress = current_trials / n_trials;
+                    }
                 })
             })
 
@@ -785,6 +831,48 @@
 
         .jspsych-survey-multi-choice-question{
             text-align: center !important;
+        }
+
+        #start-recording{
+            background: #a3f8a3;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #start-recording-audio{
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #stop-recording{
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #play-audio{
+            background: #a3f8a3;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #submit-response{
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
     </style>
