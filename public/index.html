@@ -507,11 +507,6 @@
                 word_trial.push({
                     type:jsPsychAudioStartAndStopButton,
                     stimulus: word,
-                    data:{
-                        speaker: jsPsych.timelineVariable('speaker'),
-                        word: jsPsych.timelineVariable('word'),
-                        filename: jsPsych.timelineVariable('filename'),
-                    },
                     on_finish: function (data){
                         current_trials += 1
                         jsPsych.progressBar.progress = current_trials / n_trials;
