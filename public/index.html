@@ -307,14 +307,13 @@
                     on_finish: function (data){
                         console.log(data.response)
                         if(data.response[question.name] !== question.validAnswer){
-                            console.log("false statement")
                             screeningQuestionsBoolean = false;
                         }
                     }
                 });
             });
 
-            // timeline.push(...screeningTimeline)
+            timeline.push(...screeningTimeline)
 
             const not_qualified_text={
                 type:jsPsychHtmlKeyboardResponse,
@@ -332,7 +331,7 @@
                     }
                 }
             }
-            // timeline.push(not_qualified_text)
+            timeline.push(not_qualified_text)
 
             const practice_words = {
                 type: jsPsychHtmlKeyboardResponse,
@@ -343,15 +342,15 @@
                     "</div>"
             }
 
-            // timeline.push(practice_words)
+            timeline.push(practice_words)
 
-            conso
-
-            const test_procedure = {
-                timeline_variables: test_stimuli
-            }
-
-            timeline.push(test_procedure)
+            // conso
+            //
+            // const test_procedure = {
+            //     timeline_variables: test_stimuli
+            // }
+            //
+            // timeline.push(test_procedure)
 
             let practice_words_list = ["Gosh", "Excellent"]
             let practice_word_trial = []
