@@ -150,15 +150,13 @@ app.get('/get-data', (req, res) => {
 
                     const result = await response.json();
 
-                    // Concatenate the current batch of records with the previous ones
                     allRecords = allRecords.concat(result.records);
 
-                    // Set the offset for the next request, if available
                     offset = result.offset;
 
-                } while (offset);  // Keep looping until there's no more offset
+                } while (offset);
 
-                return allRecords;  // Return all the records after fetching
+                return allRecords;
 
             } catch (error) {
                 console.log('Could not fetch data from Airtable.', error);
@@ -169,6 +167,7 @@ app.get('/get-data', (req, res) => {
         const data = Airtable(process.env.AIRTABLE_ALIGNMENT_BASE, results[1])
 
         data.then((result) =>{
+            let index = 1
             for(let rows in result){
                 let temp_data = result[rows].fields
                 let audio_url;
@@ -181,8 +180,9 @@ app.get('/get-data', (req, res) => {
                 }
                 audio.push(audio_url)
                 temp_data['url'] = audio_url
+                temp_data['index'] = index
+                index += 1
                 test_stimuli.push(result[rows].fields)
-                console.log(audio)
             }
         }).then((dataset) =>{
             res.status(200).json({

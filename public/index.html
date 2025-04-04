@@ -28,6 +28,7 @@
         let recordingTimeout;
         let n_trials = 34;
         let current_trials = 0;
+        let audio_clips = 1;
 
         let words = [
             "Awesome",
@@ -60,8 +61,8 @@
 
         async function fetchData() {
             try {
-                // const response = await fetch('http://localhost:3000/get-data');
-                const response = await fetch('https://alignment-voice.vercel.app/get-data');
+                const response = await fetch('http://localhost:3000/get-data');
+                // const response = await fetch('https://alignment-voice.vercel.app/get-data');
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}, ${response.statusText}`);
@@ -72,11 +73,7 @@
                 audio = data['audio'];
                 labeled = data['labeled']
                 if(labeled === "labeled"){table = data['table']}
-
-                console.log("Audio URLs:", audio);
-                console.log("Timeline Variables:", test_stimuli);
-                console.log("Labeled:", labeled)
-                console.log("Table Selected:", table)
+                console.log(test_stimuli)
 
                 initializeJsPsych();
             } catch (error) {
@@ -305,7 +302,6 @@
                         }
                     ],
                     on_finish: function (data){
-                        console.log(data.response)
                         if(data.response[question.name] !== question.validAnswer){
                             screeningQuestionsBoolean = false;
                         }
@@ -324,13 +320,13 @@
                 on_start: function (not_qualified_text){
                     console.log(screeningQuestionsBoolean)
                     if(screeningQuestionsBoolean){
-                        console.log(not_qualified_text)
                         not_qualified_text.stimulus = '<p>Screening Test Completed</p>' +
                             '<p>Press n key to continue</p>'
                         not_qualified_text.choices = 'n'
                     }
                 }
             }
+
             timeline.push(not_qualified_text)
 
             const practice_words = {
@@ -344,17 +340,9 @@
 
             timeline.push(practice_words)
 
-            // conso
-            //
-            // const test_procedure = {
-            //     timeline_variables: test_stimuli
-            // }
-            //
-            // timeline.push(test_procedure)
-
             let practice_words_list = ["Gosh", "Excellent"]
             let practice_word_trial = []
-            //
+
             let jsPsychAudioStartAndStopButton = (function (jsPsych){
                 "use strict";
                 const info = {
@@ -474,7 +462,7 @@
                 AudioStartAndStopButtonPlugin.info = info
                 return AudioStartAndStopButtonPlugin
             })(jsPsychModule)
-            //
+
             practice_word_trial.push({
                 type:jsPsychInitializeMicrophone
             })
@@ -485,6 +473,9 @@
                     stimulus: word,
                     allow_playback: false,
                     recording_duration: 5000,
+                    data:{
+                        word: word
+                    }
                 })
             })
 
@@ -507,6 +498,9 @@
                 word_trial.push({
                     type:jsPsychAudioStartAndStopButton,
                     stimulus: word,
+                     data:{
+                         word: word
+                    },
                     on_finish: function (data){
                         current_trials += 1
                         jsPsych.progressBar.progress = current_trials / n_trials;
@@ -623,7 +617,7 @@
                     trial(display_element, trial) {
                         display_element.innerHTML = `
 
-                            <p>${trial.index}</p>
+                            <p>Audio Clip: ${trial.index}</p>
                             <br/>
                             <p>${trial.instructions}</p>
                             <audio id="stimulus-audio" src="${trial.stimulus}" hidden></audio>
@@ -757,22 +751,48 @@
 
             timeline.push(audio_trial_instructions)
 
-            let audio_listen_trials = []
-            audio.forEach(function (file){
-                let indexOfFile = audio.indexOf(file) + 1
-                console.log(indexOfFile)
-                audio_listen_trials.push({
-                    type: jsPsychAudioRepetition,
-                    stimulus: file,
-                    index: `Audio Clip: ${indexOfFile}`,
-                    on_finish: function (data){
-                        current_trials += 1
-                        jsPsych.progressBar.progress = current_trials / n_trials;
-                    }
-                })
-            })
+            const audio_listen_trials = {
+                type: jsPsychAudioRepetition,
+                stimulus: jsPsych.timelineVariable('url'),
+                index: audio_clips,
+                data:{
+                    speaker: jsPsych.timelineVariable('speaker'),
+                    word: jsPsych.timelineVariable('word'),
+                    filename: jsPsych.timelineVariable('filename'),
+                    bucket: jsPsych.timelineVariable('bucket')
+                },
+                on_finish: function (data){
+                    current_trials += 1
+                    audio_clips += 1
+                    console.log(audio_clips)
+                    jsPsych.progressBar.progress = current_trials / n_trials;
+                },
 
-            timeline.push(...audio_listen_trials)
+                on_start: function (audio_listen_trials){
+                    audio_listen_trials.index = audio_clips
+                }
+            }
+
+            const test_procedure = {
+                timeline: [audio_listen_trials],
+                timeline_variables: test_stimuli,
+                randomize_order: true
+            }
+
+            timeline.push(test_procedure)
+
+            const end_block = {
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: '<p>Thanks for participating!</p>',
+                choices:'NO_KEYS',
+                on_start: function (data) {
+                    sendResults(jsPsych.data.get()['trials'])
+                }
+            }
+
+            timeline.push(end_block)
+
+
 
             jsPsych.run({timeline:timeline})
         }
