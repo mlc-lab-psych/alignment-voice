@@ -544,66 +544,11 @@
 
             timeline.push(word_trial)
 
-            if(labeled === "labeled"){
-                if(table === "vivian"){
-                    const vivian = {
-                        type: jsPsychHtmlButtonResponse,
-                        version:"",
-                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                            "<p>Next, we are going to have you listen to some voice clips of a person who has autism spectrum disorder. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-                            "</div>",
-                        choices: ['Continue'],
-                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
-                    }
-
-                    timeline.push(vivian)
-                }
-                else if(table === "melissa"){
-                    const melissa = {
-                        type: jsPsychHtmlButtonResponse,
-                        version:"",
-                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                            "<p>Next, you will listen to some voice clips spoken by a neurotypical person. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-                            "</div>",
-                        choices: ['Continue'],
-                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
-                    }
-
-                    timeline.push(melissa)
-                }
-                else{
-                    const alexa = {
-                        type: jsPsychHtmlButtonResponse,
-                        version:"",
-                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                            "<p>Next, we are going to have you listen to some voice clips of a text-to-speech chatbot. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-                            "</div>",
-                        choices: ['Continue'],
-                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
-                    }
-
-                    timeline.push(alexa)
-                }
-            }
-            else{
-                const no_label = {
-                    type: jsPsychHtmlButtonResponse,
-                    version:"",
-                    stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                        "<p>Next, you will listen to some voice clips. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
-                        "</div>",
-                    choices: ['Continue'],
-                    button_html: [`<button class="jspsych-btn">%choice%</button>`]
-                }
-
-                timeline.push(no_label)
-            }
-
             const phase_two_practice_instruction = {
                 type: jsPsychHtmlButtonResponse,
                 version:"",
                 stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                    "<p>To test how your audio equipment is performing, we will have you listen to a few voice clips.</p>" +
+                    "<p>Now, to test how your audio equipment is performing, we will have you listen to a few voice clips.</p>" +
                     "</div>",
                 choices: ['Continue'],
                 button_html: [`<button class="jspsych-btn">%choice%</button>`]
@@ -809,6 +754,61 @@
 
             timeline.push(practice_trial)
 
+            if(labeled === "labeled"){
+                if(table === "vivian"){
+                    const vivian = {
+                        type: jsPsychHtmlButtonResponse,
+                        version:"",
+                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                            "<p>Next, we are going to have you listen to some voice clips of a person who has autism spectrum disorder. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "</div>",
+                        choices: ['Continue'],
+                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                    }
+
+                    timeline.push(vivian)
+                }
+                else if(table === "melissa"){
+                    const melissa = {
+                        type: jsPsychHtmlButtonResponse,
+                        version:"",
+                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                            "<p>Next, you will listen to some voice clips spoken by a neurotypical person. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "</div>",
+                        choices: ['Continue'],
+                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                    }
+
+                    timeline.push(melissa)
+                }
+                else{
+                    const alexa = {
+                        type: jsPsychHtmlButtonResponse,
+                        version:"",
+                        stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                            "<p>Next, we are going to have you listen to some voice clips of a text-to-speech chatbot. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "</div>",
+                        choices: ['Continue'],
+                        button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                    }
+
+                    timeline.push(alexa)
+                }
+            }
+            else{
+                const no_label = {
+                    type: jsPsychHtmlButtonResponse,
+                    version:"",
+                    stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                        "<p>Next, you will listen to some voice clips. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                        "</div>",
+                    choices: ['Continue'],
+                    button_html: [`<button class="jspsych-btn">%choice%</button>`]
+                }
+
+                timeline.push(no_label)
+            }
+
             const audio_trial_instructions = {
                 type: jsPsychHtmlKeyboardResponse,
                 version:"",
@@ -852,10 +852,13 @@
 
             const end_block = {
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: '<p>Thanks for participating!</p>',
+                stimulus: '<p>Thanks for participating! You will be now redirected to a Qualtrics Survey for you to complete.</p>',
                 choices:'NO_KEYS',
                 on_start: function (data) {
                     sendResults(jsPsych.data.get()['trials'])
+                    setTimeout(()=>{
+                        window.location = "https://rit.az1.qualtrics.com/jfe/form/SV_7W0T8CVGgZrdCOa"
+                    }, 3000)
                 }
             }
 
