@@ -29,6 +29,7 @@
         let n_trials = 34;
         let current_trials = 0;
         let audio_clips = 1;
+        let consentForm = true;
 
         let words = [
             "Awesome",
@@ -85,9 +86,6 @@
             const jsPsych = initJsPsych({
                 show_progress_bar: true,
                 auto_update_progress_bar: false,
-                on_finish: function(){
-                    jsPsych.data.displayData();
-                }
             });
 
             function getParamFromURL(name) {
@@ -192,7 +190,7 @@
                 type: jsPsychHtmlButtonResponse,
                 version:"",
                 stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                    "<h1>What risks and discomforts will you be facing</h1>" +
+                    "<h1>What risks and discomforts will you be facing?</h1>" +
                     "<p>You will be asked about your mental health history, such as questions about whether you have certain mental health disorders, physical health issues, or disabilities. Such questions may be upsetting or even triggering for certain people. If you are experiencing mental health distress when answering these questions, please do not hesitate to call the 988 Suicide and Crisis Helpline or any other mental health service.</p>" +
                     "</div>",
                 choices: ['Continue'],
@@ -258,22 +256,50 @@
                 preamble: '',
                 html: `
                     <style>
-                    .jspsych-content{
-                    text-align: left;
+                    .jspsych-content {
+                        text-align: left;
                     }
                     </style>
                     <div style="max-width: 1200px">
                         <div style='text-align: left;'>
                             <h1>Statement of Consent</h1>
-                            <p>After carefully reading all the information you have been provided, do you consent to participate in this study?</p>
+                            <p>After carefully reading all the information you have been provided, please select one of the options below:</p>
                         </div>
-                        <input type="checkbox" id="agree" name="consent" value="Agreed" required>
-                        <label for="agree">I agree</label><br><br>
+
+                        <input type="radio" id="agree" name="consent" value="Agreed" required>
+                        <label for="agree">I consent to participate in this study.</label><br><br>
+
+                        <input type="radio" id="disagree" name="consent" value="Not Agreed">
+                        <label for="disagree">I do NOT consent to participate in this study.</label><br><br>
                     </div>
-                `
-            }
+                `,
+                on_finish: function(data) {
+                    const response = data.response.consent;
+
+                    if (response === "Not Agreed") {
+                        consentForm = false
+                    }
+                }
+            };
 
             timeline.push(consent)
+
+            const not_consent_text={
+                type:jsPsychHtmlKeyboardResponse,
+                stimulus:'<p>' +
+                    'Since you selected <b>I do NOT consent to participate in this study</b>, the experiment has ended. Please close the browser.' +
+                    '</p>',
+                choices: "NO_KEYS",
+                on_start: function (not_qualified_text){
+                    if(consentForm){
+                        not_qualified_text.stimulus = '<p>Thank you for providing your consent for the study. Next you will be asked a set of questions.</p>' +
+                            '<p>When you are ready press n key to continue</p>'
+                        not_qualified_text.choices = 'n'
+                    }
+                }
+            }
+
+            timeline.push(not_consent_text)
 
             let screeningQuestions = [
                 {prompt: "Is English your primary language?", name: "primary_language", validAnswer: "Yes"},
@@ -738,7 +764,7 @@
                 return AudioRepetitionPlugin;
             })(jsPsychModule);
 
-            let practice_trials_audios = ['sound/vivian_AWESOME.wav', 'sound/vivian_ROGER.wav']
+            let practice_trials_audios = ['sound/GOSH.wav', 'sound/EXCELLENT.wav']
 
             const practice_trial = []
 
