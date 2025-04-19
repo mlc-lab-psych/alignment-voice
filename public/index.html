@@ -285,137 +285,6 @@
 
             timeline.push(not_qualified_text)
 
-            const story_instruction = {
-                type: jsPsychHtmlButtonResponse,
-                version:"",
-                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                    "<p>For this study, first we would like you to read aloud this short story. Please read the following text out loud in a clear manner.</p>" +
-                    "</div>",
-                choices: ['Continue'],
-                button_html: [`<button class="jspsych-btn">%choice%</button>`]
-            }
-
-            timeline.push(story_instruction)
-
-            let jsPsychAudioStartAndStopButtonWithoutTimer = (function (jsPsych){
-                "use strict";
-                const info = {
-                    name: "audio-start-stop-button-player",
-                    version: "1.0.0",
-                    parameters: {
-                        stimulus: {
-                            type: jsPsych.ParameterType.HTML_STRING,
-                            pretty_name: "Stimulus",
-                            default: undefined,
-                            description: "The HTML string to be shown as the stimulus.",
-                        }
-                    },
-                }
-
-                class AudioStartAndStopButtonWithoutTimerPlugin{
-                    constructor(jsPsych) {
-                        this.jsPsych = jsPsych;
-                        this.mediaRecorder = null;
-                        this.audioChunks = [];
-                        this.audioBlob = null;
-                    }
-
-                    trial(display_element, trial) {
-                        display_element.innerHTML = `
-                            <p>${trial.stimulus}</p>
-                            <button id="start-recording">Start Recording</button>
-                            <button id="stop-recording" disabled>Stop Recording</button>
-                            <audio style="display: none" id="recorded-audio" controls hidden></audio>
-                            <button id="submit-response" disabled>Submit</button>
-                        `
-
-                        const startRecordingBtn = document.getElementById("start-recording");
-                        const stopRecordingBtn = document.getElementById("stop-recording");
-                        const submitResponseBtn = document.getElementById("submit-response");
-                        const recordedAudioElement = document.getElementById("recorded-audio");
-
-                        navigator.mediaDevices
-                            .getUserMedia({ audio: true })
-                            .then((stream) => {
-                                this.mediaRecorder = new MediaRecorder(stream);
-                                this.audioChunks = [];
-
-                                this.mediaRecorder.ondataavailable = (event) => {
-                                    this.audioChunks.push(event.data);
-                                };
-
-                                this.mediaRecorder.onstop = () => {
-                                    this.audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
-                                    this.audioChunks = [];
-                                    recordedAudioElement.src = URL.createObjectURL(this.audioBlob);
-                                    recordedAudioElement.hidden = false;
-                                    submitResponseBtn.disabled = false;
-                                };
-
-
-                                startRecordingBtn.addEventListener("click", () => {
-                                    this.audioChunks = [];
-                                    this.mediaRecorder.start();
-                                    startRecordingBtn.disabled = true;
-                                    stopRecordingBtn.disabled = false;
-                                    startRecordingBtn.style.background = '#EFEFEF'
-                                    stopRecordingBtn.style.background = '#cd5c5c'
-                                    stopRecordingBtn.style.color = 'white'
-
-                                    // clearTimeout(recordingTimeout)
-                                    // recordingTimeout = setTimeout(() => {
-                                    //     this.mediaRecorder.stop();
-                                    //
-                                    //     stopRecordingBtn.disabled = true;
-                                    //     document.getElementById("timer").style.display = "none";
-                                    //     stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
-                                    //     stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
-                                    //     submitResponseBtn.style.background = '#a3f8a3'
-                                    // }, 5000);
-                                });
-
-                                stopRecordingBtn.addEventListener("click", () => {
-                                    clearTimeout(recordingTimeout)
-                                    this.mediaRecorder.stop();
-
-                                    stopRecordingBtn.disabled = true;
-                                    stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
-                                    stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
-                                    submitResponseBtn.style.background = '#a3f8a3'
-                                });
-
-                                submitResponseBtn.addEventListener("click", () => {
-                                    if (this.audioBlob) {
-                                        const reader = new FileReader();
-                                        reader.readAsDataURL(this.audioBlob);
-                                        reader.onloadend = () => {
-                                            const base64Audio = reader.result.split(",")[1];
-                                            this.jsPsych.finishTrial({ response_audio: base64Audio });
-                                        };
-                                    } else {
-                                        this.jsPsych.finishTrial({ response_audio: null });
-                                    }
-                                });
-                            })
-                            .catch((error) => {
-                                console.error("Error accessing microphone:", error);
-                                display_element.innerHTML = `<p style="color: red;">Microphone access is required for this task. Please enable your microphone and refresh the page.</p>`;
-                            });
-                    }
-                }
-
-                AudioStartAndStopButtonWithoutTimerPlugin.info = info
-                return AudioStartAndStopButtonWithoutTimerPlugin
-            })(jsPsychModule)
-
-            const story = {
-                type:jsPsychAudioStartAndStopButtonWithoutTimer,
-                stimulus: 'I live in a house near the mountains. I have two brothers and one sister, and I was born last. My father teaches mathematics, and my mother is a nurse at a big hospital. My brothers are very smart and work hard in school. My sister is a nervous girl, but she is very kind. My grandmother also lives with us. She came from Italy when I was two years old. She has grown old, but she is still very strong. She cooks the best food!\n' +
-                    'My family is very important to me. We do lots of things together. My brothers and I like to go on long walks in the mountains. My sister likes to cook with my grandmother. On the weekends we all play board games together. We laugh and always have a good time. I love my family very much.',
-            }
-
-            timeline.push(story)
-
             const practice_words = {
                 type: jsPsychHtmlKeyboardResponse,
                 version: "",
@@ -602,6 +471,137 @@
             })
 
             timeline.push(practice_word_trial)
+
+            const story_instruction = {
+                type: jsPsychHtmlButtonResponse,
+                version:"",
+                stimulus:"<div style='text-align: left; padding: 0 24px'>" +
+                    "<p>For this study, first we would like you to read aloud this short story. Please read the following text out loud in a clear manner.</p>" +
+                    "</div>",
+                choices: ['Continue'],
+                button_html: [`<button class="jspsych-btn">%choice%</button>`]
+            }
+
+            timeline.push(story_instruction)
+
+            let jsPsychAudioStartAndStopButtonWithoutTimer = (function (jsPsych){
+                "use strict";
+                const info = {
+                    name: "audio-start-stop-button-player",
+                    version: "1.0.0",
+                    parameters: {
+                        stimulus: {
+                            type: jsPsych.ParameterType.HTML_STRING,
+                            pretty_name: "Stimulus",
+                            default: undefined,
+                            description: "The HTML string to be shown as the stimulus.",
+                        }
+                    },
+                }
+
+                class AudioStartAndStopButtonWithoutTimerPlugin{
+                    constructor(jsPsych) {
+                        this.jsPsych = jsPsych;
+                        this.mediaRecorder = null;
+                        this.audioChunks = [];
+                        this.audioBlob = null;
+                    }
+
+                    trial(display_element, trial) {
+                        display_element.innerHTML = `
+                            <p>${trial.stimulus}</p>
+                            <button id="start-recording">Start Recording</button>
+                            <button id="stop-recording" disabled>Stop Recording</button>
+                            <audio style="display: none" id="recorded-audio" controls hidden></audio>
+                            <button id="submit-response" disabled>Submit</button>
+                        `
+
+                        const startRecordingBtn = document.getElementById("start-recording");
+                        const stopRecordingBtn = document.getElementById("stop-recording");
+                        const submitResponseBtn = document.getElementById("submit-response");
+                        const recordedAudioElement = document.getElementById("recorded-audio");
+
+                        navigator.mediaDevices
+                            .getUserMedia({ audio: true })
+                            .then((stream) => {
+                                this.mediaRecorder = new MediaRecorder(stream);
+                                this.audioChunks = [];
+
+                                this.mediaRecorder.ondataavailable = (event) => {
+                                    this.audioChunks.push(event.data);
+                                };
+
+                                this.mediaRecorder.onstop = () => {
+                                    this.audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
+                                    this.audioChunks = [];
+                                    recordedAudioElement.src = URL.createObjectURL(this.audioBlob);
+                                    recordedAudioElement.hidden = false;
+                                    submitResponseBtn.disabled = false;
+                                };
+
+
+                                startRecordingBtn.addEventListener("click", () => {
+                                    this.audioChunks = [];
+                                    this.mediaRecorder.start();
+                                    startRecordingBtn.disabled = true;
+                                    stopRecordingBtn.disabled = false;
+                                    startRecordingBtn.style.background = '#EFEFEF'
+                                    stopRecordingBtn.style.background = '#cd5c5c'
+                                    stopRecordingBtn.style.color = 'white'
+
+                                    // clearTimeout(recordingTimeout)
+                                    // recordingTimeout = setTimeout(() => {
+                                    //     this.mediaRecorder.stop();
+                                    //
+                                    //     stopRecordingBtn.disabled = true;
+                                    //     document.getElementById("timer").style.display = "none";
+                                    //     stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
+                                    //     stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
+                                    //     submitResponseBtn.style.background = '#a3f8a3'
+                                    // }, 5000);
+                                });
+
+                                stopRecordingBtn.addEventListener("click", () => {
+                                    clearTimeout(recordingTimeout)
+                                    this.mediaRecorder.stop();
+
+                                    stopRecordingBtn.disabled = true;
+                                    stopRecordingBtn.style.background = 'rgb(239, 239, 239)'
+                                    stopRecordingBtn.style.color = 'rgba(16, 16, 16, 0.3)'
+                                    submitResponseBtn.style.background = '#a3f8a3'
+                                });
+
+                                submitResponseBtn.addEventListener("click", () => {
+                                    if (this.audioBlob) {
+                                        const reader = new FileReader();
+                                        reader.readAsDataURL(this.audioBlob);
+                                        reader.onloadend = () => {
+                                            const base64Audio = reader.result.split(",")[1];
+                                            this.jsPsych.finishTrial({ response_audio: base64Audio });
+                                        };
+                                    } else {
+                                        this.jsPsych.finishTrial({ response_audio: null });
+                                    }
+                                });
+                            })
+                            .catch((error) => {
+                                console.error("Error accessing microphone:", error);
+                                display_element.innerHTML = `<p style="color: red;">Microphone access is required for this task. Please enable your microphone and refresh the page.</p>`;
+                            });
+                    }
+                }
+
+                AudioStartAndStopButtonWithoutTimerPlugin.info = info
+                return AudioStartAndStopButtonWithoutTimerPlugin
+            })(jsPsychModule)
+
+            const story = {
+                type:jsPsychAudioStartAndStopButtonWithoutTimer,
+                stimulus: 'I live in a house near the mountains. I have two brothers and one sister, and I was born last. My father teaches mathematics, and my mother is a nurse at a big hospital. My brothers are very smart and work hard in school. My sister is a nervous girl, but she is very kind. My grandmother also lives with us. She came from Italy when I was two years old. She has grown old, but she is still very strong. She cooks the best food!\n' +
+                    'My family is very important to me. We do lots of things together. My brothers and I like to go on long walks in the mountains. My sister likes to cook with my grandmother. On the weekends we all play board games together. We laugh and always have a good time. I love my family very much.',
+            }
+
+            timeline.push(story)
 
             const pre_exposure_task_instructions = {
                 type: jsPsychHtmlKeyboardResponse,
