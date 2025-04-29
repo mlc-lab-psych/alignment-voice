@@ -125,58 +125,190 @@
 
             timeline.push(welcome_block)
 
+            let jsPsychInstructionSurveyRadio = (function(jsPsych) {
+                "use strict";
+
+                const info = {
+                    name: "instruction-survey-radio",
+                    version: "1.0.0",
+                    parameters: {
+                        pages: {
+                            type: jsPsych.ParameterType.COMPLEX,
+                            array: true,
+                            pretty_name: "Pages",
+                            default: [],
+                            description: "Array of pages with prompt and optional choices (radio options)."
+                        },
+                        button_label_next: {
+                            type: jsPsych.ParameterType.STRING,
+                            default: "Next",
+                            pretty_name: "Next button label"
+                        },
+                        button_label_previous: {
+                            type: jsPsych.ParameterType.STRING,
+                            default: "Previous",
+                            pretty_name: "Previous button label"
+                        }
+                    }
+                };
+
+                class InstructionSurveyRadioPlugin {
+                    constructor(jsPsych) {
+                        this.jsPsych = jsPsych;
+                    }
+
+                    trial(display_element, trial) {
+                        let current_page = 0;
+                        const responses = {};
+
+                        const renderPage = () => {
+                            const page = trial.pages[current_page];
+                            display_element.innerHTML = "";
+
+                            // Prompt
+                            const promptHTML = `<div style="text-align:left;">${page.prompt}</div>`;
+                            display_element.insertAdjacentHTML('beforeend', promptHTML);
+
+                            // Choices (radio buttons)
+                            if (page.choices && Array.isArray(page.choices)) {
+                                const form = document.createElement('form');
+                                form.id = "survey-form";
+                                form.style = "margin-top: 20px;";
+                                page.choices.forEach((choice, idx) => {
+                                    const id = `choice-${current_page}-${idx}`;
+                                    form.innerHTML += `
+                                  <div style="margin-bottom: 10px;text-align: left">
+                                    <input type="radio" id="${id}" name="response" value="${choice}">
+                                    <label for="${id}">${choice}</label>
+                                  </div>
+                                `;
+                                });
+                                display_element.appendChild(form);
+                            }
+
+                            // Navigation buttons
+                            const navDiv = document.createElement('div');
+                            navDiv.style = 'margin-top: 30px; display: flex; justify-content: flex-start;';
+
+                            if (current_page > 0) {
+                                const prevBtn = document.createElement('button');
+                                prevBtn.style.padding = "12px 24px";
+                                prevBtn.style.border = "none"
+                                prevBtn.style.borderRadius = "5px"
+                                prevBtn.style.cursor = "pointer"
+                                prevBtn.style.fontWeight = "bold"
+                                prevBtn.style.marginRight = "12px"
+                                prevBtn.textContent = trial.button_label_previous;
+                                prevBtn.onclick = (e) => {
+                                    e.preventDefault();
+                                    current_page--;
+                                    renderPage();
+                                };
+                                navDiv.appendChild(prevBtn);
+                            }
+
+                            const nextBtn = document.createElement('button');
+                            nextBtn.style.padding = "12px 24px";
+                            nextBtn.style.border = "none"
+                            nextBtn.style.borderRadius = "5px"
+                            nextBtn.style.cursor = "pointer"
+                            nextBtn.style.fontWeight = "bold"
+                            nextBtn.textContent = current_page === trial.pages.length - 1 ? "Next" : trial.button_label_next;
+                            nextBtn.onclick = (e) => {
+                                e.preventDefault();
+
+                                // Save response if question exists
+                                if (page.choices) {
+                                    const selected = document.querySelector('input[name="response"]:checked');
+                                    if (!selected) {
+                                        alert("Please select an option.");
+                                        return;
+                                    }
+                                    responses[`page_${current_page}`] = selected.value;
+                                }
+
+                                if (current_page === trial.pages.length - 1) {
+                                    this.jsPsych.finishTrial({ responses });
+                                } else {
+                                    current_page++;
+                                    renderPage();
+                                }
+                            };
+                            navDiv.appendChild(nextBtn);
+                            display_element.appendChild(navDiv);
+                        };
+                        renderPage();
+                    }
+                }
+
+                InstructionSurveyRadioPlugin.info = info;
+                return InstructionSurveyRadioPlugin;
+            })(jsPsychModule);
+
             const consent_instructions = {
-                type: jsPsychInstructions,
-                pages: [
-                    '<p style=\'text-align: left; padding: 0 24px\'>' +
-                    'Hello, we are researchers from Rochester Institute of Technology’s Meaning, Language & Cognition Lab, and we are asking you to participate in a study involving social attitudes towards those from different social groups. This study is being led by Valentine Webster, from the College of Liberal Arts. The faculty advisor for this study is Lilia Rissman. This form is designed to tell you about what the study is about and what risks might be involved in participation, so you can make a properly informed decision about whether you want to participate.</p>\n',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>What is this study about?</h1>\n' +
-                    '<p>At the MLC Lab, we are currently researching attitudes towards people of different social groups.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>What will you be doing in this study?</h1>\n' +
-                    '<p>In this study, you may be tasked with listening to a series of quick audio clips, repeating after them, and answering questions related to yourself and the clips you repeat after. Further details will be provided later into your task.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>Audio Recording Necessity</h1>\n' +
-                    '<p>In order to gather the necessary audio data for our study, we will record your voice repeating the audio clips. The audio files we record will be stored in a secure OneDrive folder on password-protected devices.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>What are the benefits of this study?</h1>\n' +
-                    '<p>By researching this topic, we are aiming to understand what leads to different types of attitudes, and how these attitudes differ across diverse groups of individuals.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>What risks and discomforts will you be facing?</h1>\n' +
-                    '<p>You will be asked about your mental health history, such as questions about whether you have certain mental health disorders, physical health issues, or disabilities. Such questions may be upsetting or even triggering for certain people. If you are experiencing mental health distress when answering these questions, please do not hesitate to call the 988 Suicide and Crisis Helpline or any other mental health service.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>What are the incentives for participation?</h1>\n' +
-                    '<p>As noted in the recruitment form, you will be compensated for your participation in this study. This compensation will be at a rate of $10 per hour.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>How will privacy be ensured? <br/><br/> What information will be shared intentionally?</h1>\n' +
-                    '<p>Researchers will ensure your voice recordings are kept secure by storing them on an RIT-specific OneDrive using password-protected devices as necessary for analysis of voice clips and survey responses. Data included on repositories or preprint servers will have the Prolific/IDs to which they are attached replaced with unique random codes. No data will be distributed that will link any individual to any voice clip. Data about audio and survey responses based on the whole of the sample will be obtained through analysis and distributed, however no individual responses will be distributed.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>Follow Up Studies</h1>\n' +
-                    '<p>Note that we may request your participation again in a future study, if given your permission. Your participation is entirely voluntary, and you have the right to revoke your consent at any time in the future studies.</p>\n' +
-                    '</div>',
-
-                    '<div style=\'text-align: left; padding: 0 24px\'>\n' +
-                    '<h1>Questions?</h1>\n' +
-                    '<p>If you have any questions regarding the purpose or methods of this study after your participation has concluded, please contact Valentine Webster at vcw6651@rit.edu. Furthermore, if you have any questions or concerns regarding the rights you have as a participant in this subject, then you can contact Heather Foti at hmfsrs@rit.edu, or by phone at 585-475-7673.</p>\n' +
-                    '</div>',
+                type: jsPsychInstructionSurveyRadio,
+                pages:[
+                    {
+                      prompt:"<p style='text-align: left;'> Hello, we are researchers from Rochester Institute of Technology’s Meaning, Language & Cognition Lab, and we are asking you to participate in a study involving social attitudes towards those from different social groups. This study is being led by Valentine Webster, from the College of Liberal Arts. The faculty advisor for this study is Lilia Rissman. This form is designed to tell you about what the study is about and what risks might be involved in participation, so you can make a properly informed decision about whether you want to participate.</p>"
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>What is this study about?</h1>\n' +
+                            '<p>At the MLC Lab, we are currently researching attitudes towards people of different social groups.</p>\n' +
+                            '</div>'
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>What will you be doing in this study?</h1>\n' +
+                            '<p>In this study, you will be tasked with listening to a series of quick audio clips, repeating after them, and answering questions related to yourself and the clips you repeat after. Further details will be provided later into your task.</p>\n' +
+                            '</div>'
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>Audio Recording Necessity</h1>\n' +
+                            '<p>In order to gather the necessary audio data for our study, we will record your voice repeating the audio clips. The audio files we record will be stored in a secure OneDrive folder on password-protected devices.</p>\n' +
+                            '</div>'
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>What are the benefits of this study?</h1>\n' +
+                            '<p>By researching this topic, we are aiming to understand what leads to different types of attitudes, and how these attitudes differ across diverse groups of individuals.</p>\n' +
+                            '</div>'
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>What risks and discomforts will you be facing?</h1>\n' +
+                            '<p>You will be asked about your mental health history, such as questions about whether you have certain mental health disorders, physical health issues, or disabilities. Such questions may be upsetting or even triggering for certain people. If you are experiencing mental health distress when answering these questions, please do not hesitate to call the 988 Suicide and Crisis Helpline or any other mental health service.</p>\n' +
+                            '</div>'
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>What are the incentives for participation?</h1>\n' +
+                            '<p>As noted in the recruitment form, you will be compensated for your participation in this study. This compensation will be at a rate of $10 per hour.</p>\n' +
+                            '</div>'
+                    },
+                    {
+                        prompt: '<div style=\'text-align: left;\'>\n' +
+                            '<h1>How will privacy be ensured? <br/><br/> What information will be shared intentionally?</h1>\n' +
+                            '<p>Researchers will ensure your voice recordings are kept secure by storing them on an RIT-specific OneDrive using password-protected devices as necessary for analysis of voice clips and survey responses. Data included on repositories or preprint servers will have the Prolific/IDs to which they are attached replaced with unique random codes. No data will be distributed that will link any individual to any voice clip. Data about audio and survey responses based on the whole of the sample will be obtained through analysis and distributed, however no individual responses will be distributed.</p>\n' +
+                            '</div>'
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>Follow Up Studies</h1>\n' +
+                            '<p>Note that we may request your participation again in a future study, if given your permission. Your participation is entirely voluntary, and you have the right to revoke your consent at any time in the future studies.</p>\n' +
+                            '</div>',
+                        choices: ["Yes, you can contact me", "No, please do not contact me"]
+                    },
+                    {
+                        prompt:'<div style=\'text-align: left;\'>\n' +
+                            '<h1>Questions?</h1>\n' +
+                            '<p>If you have any questions regarding the purpose or methods of this study after your participation has concluded, please contact Valentine Webster at vcw6651@rit.edu. Furthermore, if you have any questions or concerns regarding the rights you have as a participant in this subject, then you can contact Heather Foti at hmfsrs@rit.edu, or by phone at 585-475-7673.</p>\n' +
+                            '</div>'
+                    }
                 ],
-                show_clickable_nav: true
+                button_label_next: "Next",
+                button_label_previous: "Previous"
             }
 
             timeline.push(consent_instructions)
@@ -289,7 +421,8 @@
                 type: jsPsychHtmlKeyboardResponse,
                 version: "",
                 stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                    "<p>Next, we are going to have you test your recording equipment. Please record yourself saying these words. Each word should be spoken once, in an expressive manner. Make sure that you are in a quiet area and speaking clearly. Additionally, please ensure that notifications are enabled on the device you use to complete these tasks.</p>" +
+                    "<p>Next, we are going to have you test your recording equipment. Please record yourself saying these words. Each word should be spoken once, in an <b>expressive manner</b>. Make sure that you are in a <b>quiet area and speaking clearly</b>. Additionally, please ensure that notifications are enabled on the device you use to complete these tasks.</p>" +
+                    "<br/><b><i>You shouldn't change your microphone (input/output device) during the task—please continue using the same device throughout for consistency.</i></b>"+
                     "<p>Press any key to begin.</p>"+
                     "</div>"
             }
@@ -461,6 +594,7 @@
                     type:jsPsychAudioStartAndStopButton,
                     stimulus: word,
                     playback: true,
+                    instructions:"1. Repeat the word after clicking Start Recording button.<br/> 2. Click Stop Recording button after you finish repeating the word. <br/> 3. Click on Submit button to share your response.<br/><br/> <i>You should play back your recording to make sure it's being recorded correctly.</i>",
 
                     data:{
                         word: word,
@@ -607,7 +741,8 @@
                 type: jsPsychHtmlKeyboardResponse,
                 version:"",
                 stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                    "<p>You will be shown a list of words in a random order. For each of these words, please say them out loud in an enthusiastic manner once. Please make sure that you are in a quiet area to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
+                    "<p>You will be shown a list of words in a random order. For each of these words, please say them out loud in an <b>enthusiastic manner</b> once. Please make sure that you are in a <b>quiet area</b> to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
+                    "<br/><b><i>You shouldn't change your microphone (input/output device) during the task—please continue using the same device throughout for consistency.</i></b>"+
                     "<p>Press any key to begin.</p>"+
                     "</div>"
             }
@@ -664,7 +799,7 @@
                         instructions: {
                             type: jsPsych.ParameterType.HTML_STRING,
                             pretty_name: "Instructions",
-                            default: "1. Click on the Play Audio button to hear the word. <br/> 2. After hearing the word, click on Start Recording button to enable recording to capture your try. <br/> 3. After repeating the word, click on Stop Recording button. <br/> 4. Click on the Submit button to share your response.  ",
+                            default:"1. Click on the Play Audio button to hear the word. <br/> 2. Click on \"Start Recording\" and say out loud the word you just heard.<br/> 3. Click on \"Stop Recording' when you are finished. <br/> 4. Hit \"Submit\".",
                             description: "HTML-formatted instructions for the participant.",
                         },
                         index: {
@@ -841,6 +976,7 @@
                     stimulus: file,
                     index: `Practice Audio Clip: ${indexOfFile}`,
                     playback: true,
+                    instructions:"1. Click on the Play Audio button to hear the word. <br/> 2. Click on \"Start Recording\" and say out loud the word you just heard.<br/> 3. Click on \"Stop Recording' when you are finished. <br/> 4. Hit \"Submit\".<br/><br/><i>You should play back your recording to make sure it's being recorded correctly.</i>",
 
                     data:{
                         word: file.split('/')[1].split('.')[0],
@@ -858,7 +994,7 @@
                         type: jsPsychHtmlButtonResponse,
                         version:"",
                         stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                            "<p>Next, we are going to have you listen to some voice clips of a person who has autism spectrum disorder. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "<p>Next, we are going to have you listen to some voice clips of <b>a person who has autism spectrum disorder</b>. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a <b>quiet area with properly functioning recording equipment</b>. You may listen to the word more than once if you would like.</p>" +
                             "</div>",
                         choices: ['Continue'],
                         button_html: [`<button class="jspsych-btn">%choice%</button>`]
@@ -871,7 +1007,7 @@
                         type: jsPsychHtmlButtonResponse,
                         version:"",
                         stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                            "<p>Next, you will listen to some voice clips spoken by a neurotypical person. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "<p>Next, you will listen to some voice clips spoken by <b>a neurotypical person</b>. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a <b>quiet area with properly functioning recording equipment</b>. You may listen to the word more than once if you would like.</p>" +
                             "</div>",
                         choices: ['Continue'],
                         button_html: [`<button class="jspsych-btn">%choice%</button>`]
@@ -884,7 +1020,7 @@
                         type: jsPsychHtmlButtonResponse,
                         version:"",
                         stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                            "<p>Next, we are going to have you listen to some voice clips of a text-to-speech chatbot. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                            "<p>Next, we are going to have you listen to some voice clips of <b>a text-to-speech chatbot</b>. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a <b>quiet area with properly functioning recording equipment</b>. You may listen to the word more than once if you would like.</p>" +
                             "</div>",
                         choices: ['Continue'],
                         button_html: [`<button class="jspsych-btn">%choice%</button>`]
@@ -898,7 +1034,7 @@
                     type: jsPsychHtmlButtonResponse,
                     version:"",
                     stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                        "<p>Next, you will listen to some voice clips. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a quiet area with properly functioning recording equipment. You may listen to the word more than once if you would like.</p>" +
+                        "<p>Next, you will listen to some voice clips. On each trial, you will hear a word. Please record yourself repeating this word once. Just like the first portion of the task, please ensure that you are in a <b>quiet area with properly functioning recording equipment</b>. You may listen to the word more than once if you would like.</p>" +
                         "</div>",
                     choices: ['Continue'],
                     button_html: [`<button class="jspsych-btn">%choice%</button>`]
@@ -911,7 +1047,8 @@
                 type: jsPsychHtmlKeyboardResponse,
                 version:"",
                 stimulus:"<div style='text-align: left; padding: 0 24px'>" +
-                    "<p>You will be provided a list of audio clip of words in a random order. For each of these words, please say them out loud in an enthusiastic manner once. Please make sure that you are in a quiet area to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
+                    "<p>You will be provided a list of audio clip of words in a random order. Please record yourself <b>repeating this word once</b>. Please make sure that you are in a quiet area to perform this task and ensure that your recording device (such as a microphone) and audio equipment (such as headphones or earbuds) are in proper working order.</p>" +
+                    "<br/><b><i>You shouldn't change your microphone (input/output device) during the task—please continue using the same device throughout for consistency.</i></b>"+
                     "<p>Press any key to begin.</p>"+
                     "</div>"
             }
